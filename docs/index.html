@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartPing Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Top Navigation Bar -->
+    <nav class="top-nav">
+        <div class="nav-left">
+            <div class="logo">
+                <span class="logo-icon">&#127955;</span>
+                <span class="logo-text">SmartPing</span>
+            </div>
+            <span class="nav-subtitle">AI-Based Table Tennis Training System</span>
+        </div>
+        <div class="nav-right">
+            <div class="session-badge active">
+                <span class="pulse-dot"></span>
+                Session Active
+            </div>
+            <button class="btn-start" id="btnToggleSession">
+                <span id="btnIcon">&#9724;</span>
+                <span id="btnText">Stop Session</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Module Status Bar -->
+    <div class="status-bar">
+        <div class="status-item online" id="statusDashboard">
+            <span class="status-dot"></span>
+            <span class="status-label">Dashboard</span>
+            <span class="status-state">Online</span>
+        </div>
+        <div class="status-item online" id="statusWebSocket">
+            <span class="status-dot"></span>
+            <span class="status-label">WebSocket Server</span>
+            <span class="status-state">Connected</span>
+        </div>
+        <div class="status-item online" id="statusCamera">
+            <span class="status-dot"></span>
+            <span class="status-label">Kamera + YOLOv8</span>
+            <span class="status-state">Detecting</span>
+        </div>
+        <div class="status-item warning" id="statusLauncher">
+            <span class="status-dot"></span>
+            <span class="status-label">Hardware Launcher</span>
+            <span class="status-state">Standby</span>
+        </div>
+        <div class="status-item online" id="statusMQTT">
+            <span class="status-dot"></span>
+            <span class="status-label">MQTT Broker</span>
+            <span class="status-state">Connected</span>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="dashboard-main">
+        <!-- Metric Cards Row -->
+        <section class="metrics-row">
+            <div class="metric-card">
+                <div class="metric-icon blue">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
+                </div>
+                <div class="metric-info">
+                    <span class="metric-value" id="totalBalls">0</span>
+                    <span class="metric-label">Total Bola Dilontarkan</span>
+                </div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-icon green">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                </div>
+                <div class="metric-info">
+                    <span class="metric-value" id="accuracy">0%</span>
+                    <span class="metric-label">Akurasi Deteksi YOLOv8</span>
+                </div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-icon purple">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                </div>
+                <div class="metric-info">
+                    <span class="metric-value" id="fps">0</span>
+                    <span class="metric-label">FPS Kamera</span>
+                </div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-icon orange">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                </div>
+                <div class="metric-info">
+                    <span class="metric-value" id="sessionDuration">00:00</span>
+                    <span class="metric-label">Durasi Sesi</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Main Grid: Table View + Charts -->
+        <section class="main-grid">
+            <!-- Left: Table Tennis Top View -->
+            <div class="card table-view-card">
+                <div class="card-header">
+                    <h2>Visualisasi Meja (Top View)</h2>
+                    <div class="zone-legend">
+                        <span class="legend-item"><span class="legend-color left"></span>Zona Kiri</span>
+                        <span class="legend-item"><span class="legend-color right"></span>Zona Kanan</span>
+                    </div>
+                </div>
+                <div class="table-view-container">
+                    <canvas id="tableCanvas" width="500" height="300"></canvas>
+                </div>
+                <div class="zone-stats">
+                    <div class="zone-stat left-zone">
+                        <span class="zone-stat-label">Zona Kiri</span>
+                        <span class="zone-stat-value" id="leftZoneCount">0</span>
+                        <span class="zone-stat-pct" id="leftZonePct">0%</span>
+                    </div>
+                    <div class="zone-divider"></div>
+                    <div class="zone-stat right-zone">
+                        <span class="zone-stat-label">Zona Kanan</span>
+                        <span class="zone-stat-value" id="rightZoneCount">0</span>
+                        <span class="zone-stat-pct" id="rightZonePct">0%</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Charts Column -->
+            <div class="charts-column">
+                <!-- Zone Distribution Chart -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2>Distribusi Zona per Interval</h2>
+                        <select id="chartInterval" class="select-interval">
+                            <option value="10">10 detik</option>
+                            <option value="30" selected>30 detik</option>
+                            <option value="60">60 detik</option>
+                        </select>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="zoneChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Accuracy Over Time -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2>Confidence Score Trend</h2>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="confidenceChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Heatmap + Player Performance -->
+        <section class="secondary-grid">
+            <!-- Heatmap -->
+            <div class="card heatmap-card">
+                <div class="card-header">
+                    <h2>Heatmap Posisi Bola</h2>
+                    <span class="badge">Real-time</span>
+                </div>
+                <div class="heatmap-container">
+                    <canvas id="heatmapCanvas" width="500" height="300"></canvas>
+                </div>
+                <div class="heatmap-legend">
+                    <span class="hl-label">Jarang</span>
+                    <div class="hl-gradient"></div>
+                    <span class="hl-label">Sering</span>
+                </div>
+            </div>
+
+            <!-- Player Performance Summary -->
+            <div class="card performance-card">
+                <div class="card-header">
+                    <h2>Performa Pemain</h2>
+                </div>
+                <div class="performance-grid">
+                    <div class="perf-item">
+                        <div class="perf-ring" id="perfReturnRate">
+                            <svg viewBox="0 0 100 100">
+                                <circle cx="50" cy="50" r="42" class="ring-bg"/>
+                                <circle cx="50" cy="50" r="42" class="ring-fg green" stroke-dasharray="263.9" stroke-dashoffset="66"/>
+                            </svg>
+                            <span class="ring-value">75%</span>
+                        </div>
+                        <span class="perf-label">Return Rate</span>
+                    </div>
+                    <div class="perf-item">
+                        <div class="perf-ring" id="perfLeftAccuracy">
+                            <svg viewBox="0 0 100 100">
+                                <circle cx="50" cy="50" r="42" class="ring-bg"/>
+                                <circle cx="50" cy="50" r="42" class="ring-fg blue" stroke-dasharray="263.9" stroke-dashoffset="92"/>
+                            </svg>
+                            <span class="ring-value">65%</span>
+                        </div>
+                        <span class="perf-label">Akurasi Kiri</span>
+                    </div>
+                    <div class="perf-item">
+                        <div class="perf-ring" id="perfRightAccuracy">
+                            <svg viewBox="0 0 100 100">
+                                <circle cx="50" cy="50" r="42" class="ring-bg"/>
+                                <circle cx="50" cy="50" r="42" class="ring-fg orange" stroke-dasharray="263.9" stroke-dashoffset="50"/>
+                            </svg>
+                            <span class="ring-value">81%</span>
+                        </div>
+                        <span class="perf-label">Akurasi Kanan</span>
+                    </div>
+                    <div class="perf-item">
+                        <div class="perf-ring" id="perfAvgLatency">
+                            <svg viewBox="0 0 100 100">
+                                <circle cx="50" cy="50" r="42" class="ring-bg"/>
+                                <circle cx="50" cy="50" r="42" class="ring-fg purple" stroke-dasharray="263.9" stroke-dashoffset="132"/>
+                            </svg>
+                            <span class="ring-value">24ms</span>
+                        </div>
+                        <span class="perf-label">Avg Latency</span>
+                    </div>
+                </div>
+                <div class="weakness-indicator">
+                    <span class="weakness-label">Kelemahan Terdeteksi:</span>
+                    <span class="weakness-zone" id="weaknessZone">Zona Kiri - Forehand</span>
+                    <div class="weakness-bar">
+                        <div class="weakness-fill" id="weaknessFill" style="width: 35%"></div>
+                    </div>
+                    <span class="weakness-hint">Launcher akan fokus ke area ini</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Detection Log Table -->
+        <section class="log-section">
+            <div class="card">
+                <div class="card-header">
+                    <h2>Log Deteksi Real-time</h2>
+                    <div class="log-controls">
+                        <span class="log-count" id="logCount">0 entries</span>
+                        <button class="btn-clear" id="btnClearLog">Clear Log</button>
+                    </div>
+                </div>
+                <div class="table-wrapper">
+                    <table class="log-table">
+                        <thead>
+                            <tr>
+                                <th>Timestamp</th>
+                                <th>Ball ID</th>
+                                <th>Posisi X</th>
+                                <th>Posisi Y</th>
+                                <th>Zona</th>
+                                <th>Confidence</th>
+                                <th>Latency (ms)</th>
+                                <th>Model</th>
+                                <th>Servo Angle</th>
+                            </tr>
+                        </thead>
+                        <tbody id="logTableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- Launcher Control Panel -->
+        <section class="control-section">
+            <div class="card">
+                <div class="card-header">
+                    <h2>Kontrol Launcher</h2>
+                    <span class="badge warning">Hardware</span>
+                </div>
+                <div class="control-grid">
+                    <div class="control-item">
+                        <label>Kecepatan Motor</label>
+                        <div class="slider-group">
+                            <input type="range" min="0" max="100" value="65" class="slider" id="motorSpeed">
+                            <span class="slider-value" id="motorSpeedVal">65%</span>
+                        </div>
+                    </div>
+                    <div class="control-item">
+                        <label>Sudut Servo</label>
+                        <div class="slider-group">
+                            <input type="range" min="0" max="180" value="90" class="slider" id="servoAngle">
+                            <span class="slider-value" id="servoAngleVal">90&deg;</span>
+                        </div>
+                    </div>
+                    <div class="control-item">
+                        <label>Mode Adaptif</label>
+                        <div class="toggle-group">
+                            <label class="toggle">
+                                <input type="checkbox" id="adaptiveMode" checked>
+                                <span class="toggle-slider"></span>
+                            </label>
+                            <span class="toggle-label" id="adaptiveLabel">Aktif</span>
+                        </div>
+                    </div>
+                    <div class="control-item">
+                        <label>Interval Lontaran</label>
+                        <div class="slider-group">
+                            <input type="range" min="1" max="10" value="3" class="slider" id="launchInterval">
+                            <span class="slider-value" id="launchIntervalVal">3s</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <span>SmartPing &copy; 2026 &mdash; Tim 5 Proyek Telematika ITS</span>
+        <span class="footer-members">Fioreno M.T. &middot; Devlin J.S. &middot; Alfito I.G.</span>
+    </footer>
+
+    <script src="app.js"></script>
+</body>
+</html>
