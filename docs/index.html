@@ -268,19 +268,18 @@
             </div>
         </section>
 
-        <!-- Hardware Status + Launcher Control Panel -->
+        <!-- Hardware Status Panel (read-only telemetry) -->
         <section class="control-section">
-            <div class="hardware-grid">
-                <!-- LEFT: Hardware Status (ESP32-S3) -->
-                <div class="card hw-status-card">
-                    <div class="card-header">
-                        <h2>Status Hardware (ESP32-S3)</h2>
-                        <button class="mode-badge smart" id="modeBadge" title="Klik untuk simulasi saklar mode">
-                            <span class="mode-dot"></span>
-                            <span id="modeText">SMART</span>
-                        </button>
-                    </div>
-                    <div class="hw-body">
+            <div class="card hw-status-card">
+                <div class="card-header">
+                    <h2>Status Hardware (ESP32-S3)</h2>
+                    <span class="mode-badge smart" id="modeBadge">
+                        <span class="mode-dot"></span>
+                        <span id="modeText">SMART</span>
+                    </span>
+                </div>
+                <div class="hw-body">
+                    <div class="hw-row-grid">
                         <div class="hw-row">
                             <div class="hw-row-label">
                                 <span class="hw-label">Mode Switch</span>
@@ -295,132 +294,82 @@
                             </div>
                             <span class="hw-pill on" id="hwMasterEN">HIGH</span>
                         </div>
-                        <div class="hw-divider"></div>
-                        <div class="relay-grid">
-                            <div class="relay-block on" id="relayA">
-                                <div class="relay-head">
-                                    <span class="relay-name">Relay A</span>
-                                    <span class="pin-tag">GPIO 4&middot;5</span>
-                                </div>
-                                <div class="relay-state">NO &middot; Smart</div>
-                                <div class="relay-sub">Motor Pelontar A</div>
-                            </div>
-                            <div class="relay-block on" id="relayB">
-                                <div class="relay-head">
-                                    <span class="relay-name">Relay B</span>
-                                    <span class="pin-tag">GPIO 6&middot;7</span>
-                                </div>
-                                <div class="relay-state">NO &middot; Smart</div>
-                                <div class="relay-sub">Motor Pelontar B</div>
-                            </div>
-                            <div class="relay-block on" id="relayC">
-                                <div class="relay-head">
-                                    <span class="relay-name">Relay C</span>
-                                    <span class="pin-tag">GPIO 15&middot;16</span>
-                                </div>
-                                <div class="relay-state">NO &middot; Smart</div>
-                                <div class="relay-sub">Motor Feeder C</div>
-                            </div>
-                        </div>
-                        <div class="hw-divider"></div>
-                        <div class="psu-row">
-                            <div class="psu-item">
-                                <span class="psu-label">PSU 24V</span>
-                                <span class="psu-val">24.1 V</span>
-                            </div>
-                            <div class="psu-item">
-                                <span class="psu-label">Logic 5V (LM2596)</span>
-                                <span class="psu-val">5.02 V</span>
-                            </div>
-                            <div class="psu-item">
-                                <span class="psu-label">Arus Total</span>
-                                <span class="psu-val" id="psuCurrent">2.4 A</span>
-                            </div>
-                        </div>
                     </div>
-                </div>
 
-                <!-- RIGHT: Control Launcher -->
-                <div class="card hw-control-card">
-                    <div class="card-header">
-                        <h2>Kontrol Launcher</h2>
-                        <div class="control-toggles">
-                            <label class="mini-toggle">
-                                <input type="checkbox" id="masterEnable" checked>
-                                <span>Master EN</span>
-                            </label>
-                            <label class="mini-toggle">
-                                <input type="checkbox" id="syncAB" checked>
-                                <span>Sync A=B</span>
-                            </label>
+                    <div class="hw-section-title">Relay Selector</div>
+                    <div class="relay-grid">
+                        <div class="relay-block on" id="relayA">
+                            <div class="relay-head">
+                                <span class="relay-name">Relay A</span>
+                                <span class="pin-tag">GPIO 4&middot;5</span>
+                            </div>
+                            <div class="relay-state">NO &middot; Smart</div>
+                            <div class="relay-sub">Motor Pelontar A</div>
+                        </div>
+                        <div class="relay-block on" id="relayB">
+                            <div class="relay-head">
+                                <span class="relay-name">Relay B</span>
+                                <span class="pin-tag">GPIO 6&middot;7</span>
+                            </div>
+                            <div class="relay-state">NO &middot; Smart</div>
+                            <div class="relay-sub">Motor Pelontar B</div>
+                        </div>
+                        <div class="relay-block on" id="relayC">
+                            <div class="relay-head">
+                                <span class="relay-name">Relay C</span>
+                                <span class="pin-tag">GPIO 15&middot;16</span>
+                            </div>
+                            <div class="relay-state">NO &middot; Smart</div>
+                            <div class="relay-sub">Motor Feeder C</div>
                         </div>
                     </div>
-                    <div class="control-body" id="controlBody">
-                        <div class="control-grid">
-                            <div class="control-item motor-item">
-                                <div class="control-label-row">
-                                    <label>Motor Pelontar A</label>
-                                    <span class="pin-tag">PWM &middot; GPIO 1</span>
-                                </div>
-                                <div class="slider-group">
-                                    <input type="range" min="0" max="100" value="65" class="slider motor-a" id="motorA">
-                                    <span class="slider-value" id="motorAVal">65%</span>
-                                </div>
+
+                    <div class="hw-section-title">PWM Duty (live)</div>
+                    <div class="motor-duty-grid">
+                        <div class="motor-duty">
+                            <div class="motor-duty-head">
+                                <span class="motor-duty-name">Motor Pelontar A</span>
+                                <span class="pin-tag">GPIO 1</span>
                             </div>
-                            <div class="control-item motor-item">
-                                <div class="control-label-row">
-                                    <label>Motor Pelontar B</label>
-                                    <span class="pin-tag">PWM &middot; GPIO 2</span>
-                                </div>
-                                <div class="slider-group">
-                                    <input type="range" min="0" max="100" value="65" class="slider motor-b" id="motorB">
-                                    <span class="slider-value" id="motorBVal">65%</span>
-                                </div>
+                            <div class="motor-duty-bar">
+                                <div class="motor-duty-fill blue" id="dutyAFill" style="width:65%"></div>
                             </div>
-                            <div class="control-item motor-item">
-                                <div class="control-label-row">
-                                    <label>Motor Feeder C</label>
-                                    <span class="pin-tag">PWM &middot; GPIO 8</span>
-                                </div>
-                                <div class="slider-group">
-                                    <input type="range" min="0" max="100" value="50" class="slider motor-c" id="motorC">
-                                    <span class="slider-value" id="motorCVal">50%</span>
-                                </div>
-                            </div>
-                            <div class="control-item">
-                                <div class="control-label-row">
-                                    <label>Servo Pan <span class="future-tag">FUTURE</span></label>
-                                    <span class="pin-tag">GPIO 18</span>
-                                </div>
-                                <div class="slider-group">
-                                    <input type="range" min="0" max="180" value="90" class="slider" id="servoAngle" disabled>
-                                    <span class="slider-value" id="servoAngleVal">90&deg;</span>
-                                </div>
-                            </div>
-                            <div class="control-item">
-                                <label>Interval Lontaran</label>
-                                <div class="slider-group">
-                                    <input type="range" min="1" max="10" value="3" class="slider" id="launchInterval">
-                                    <span class="slider-value" id="launchIntervalVal">3s</span>
-                                </div>
-                            </div>
-                            <div class="control-item">
-                                <label>Mode Adaptif</label>
-                                <div class="toggle-group">
-                                    <label class="toggle">
-                                        <input type="checkbox" id="adaptiveMode" checked>
-                                        <span class="toggle-slider"></span>
-                                    </label>
-                                    <span class="toggle-label" id="adaptiveLabel">Aktif</span>
-                                </div>
-                            </div>
+                            <span class="motor-duty-val" id="dutyAVal">65%</span>
                         </div>
-                        <div class="manual-overlay" id="manualOverlay" hidden>
-                            <div class="manual-overlay-content">
-                                <span class="overlay-tag">MODE MANUAL</span>
-                                <strong>Kontrol via potensiometer hardware</strong>
-                                <p>Jalur motor terhubung ke driver lama (NC). Toggle saklar ke posisi Smart untuk kontrol via ESP32 + BTS7960.</p>
+                        <div class="motor-duty">
+                            <div class="motor-duty-head">
+                                <span class="motor-duty-name">Motor Pelontar B</span>
+                                <span class="pin-tag">GPIO 2</span>
                             </div>
+                            <div class="motor-duty-bar">
+                                <div class="motor-duty-fill cyan" id="dutyBFill" style="width:62%"></div>
+                            </div>
+                            <span class="motor-duty-val" id="dutyBVal">62%</span>
+                        </div>
+                        <div class="motor-duty">
+                            <div class="motor-duty-head">
+                                <span class="motor-duty-name">Motor Feeder C</span>
+                                <span class="pin-tag">GPIO 8</span>
+                            </div>
+                            <div class="motor-duty-bar">
+                                <div class="motor-duty-fill purple" id="dutyCFill" style="width:50%"></div>
+                            </div>
+                            <span class="motor-duty-val" id="dutyCVal">50%</span>
+                        </div>
+                    </div>
+
+                    <div class="psu-row">
+                        <div class="psu-item">
+                            <span class="psu-label">PSU 24V</span>
+                            <span class="psu-val">24.1 V</span>
+                        </div>
+                        <div class="psu-item">
+                            <span class="psu-label">Logic 5V (LM2596)</span>
+                            <span class="psu-val">5.02 V</span>
+                        </div>
+                        <div class="psu-item">
+                            <span class="psu-label">Arus Total</span>
+                            <span class="psu-val" id="psuCurrent">2.4 A</span>
                         </div>
                     </div>
                 </div>
