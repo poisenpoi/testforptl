@@ -509,9 +509,73 @@ document.getElementById('btnClearLog').addEventListener('click', () => {
     document.getElementById('logCount').textContent = '0 entries';
 });
 
-// Slider handlers
-document.getElementById('motorSpeed').addEventListener('input', (e) => {
-    document.getElementById('motorSpeedVal').textContent = e.target.value + '%';
+// --- Hardware state (mirrors ESP32-S3) ---
+const hwState = {
+    mode: 'smart',          // 'smart' | 'manual'
+    masterEnable: true,
+    syncAB: true,
+    motorA: 65,
+    motorB: 65,
+    motorC: 50,
+    transitioning: false,
+};
+
+const motorA = document.getElementById('motorA');
+const motorB = document.getElementById('motorB');
+const motorC = document.getElementById('motorC');
+const motorAVal = document.getElementById('motorAVal');
+const motorBVal = document.getElementById('motorBVal');
+const motorCVal = document.getElementById('motorCVal');
+const syncAB = document.getElementById('syncAB');
+const masterEnable = document.getElementById('masterEnable');
+const modeBadge = document.getElementById('modeBadge');
+const modeText = document.getElementById('modeText');
+const hwModeSwitch = document.getElementById('hwModeSwitch');
+const hwMasterEN = document.getElementById('hwMasterEN');
+const manualOverlay = document.getElementById('manualOverlay');
+const controlBody = document.getElementById('controlBody');
+const statusLauncher = document.getElementById('statusLauncher');
+const statusLauncherState = document.getElementById('statusLauncherState');
+
+function setMotorSlider(slider, valEl, key, value) {
+    slider.value = value;
+    valEl.textContent = value + '%';
+    hwState[key] = value;
+}
+
+motorA.addEventListener('input', (e) => {
+    const v = parseInt(e.target.value);
+    motorAVal.textContent = v + '%';
+    hwState.motorA = v;
+    if (hwState.syncAB) setMotorSlider(motorB, motorBVal, 'motorB', v);
+});
+
+motorB.addEventListener('input', (e) => {
+    const v = parseInt(e.target.value);
+    motorBVal.textContent = v + '%';
+    hwState.motorB = v;
+    if (hwState.syncAB) setMotorSlider(motorA, motorAVal, 'motorA', v);
+});
+
+motorC.addEventListener('input', (e) => {
+    const v = parseInt(e.target.value);
+    motorCVal.textContent = v + '%';
+    hwState.motorC = v;
+});
+
+syncAB.addEventListener('change', (e) => {
+    hwState.syncAB = e.target.checked;
+    if (e.target.checked) {
+        // Re-sync B to A when re-enabled
+        setMotorSlider(motorB, motorBVal, 'motorB', hwState.motorA);
+    }
+});
+
+masterEnable.addEventListener('change', (e) => {
+    hwState.masterEnable = e.target.checked;
+    hwMasterEN.textContent = e.target.checked ? 'HIGH' : 'LOW';
+    hwMasterEN.classList.toggle('on', e.target.checked);
+    hwMasterEN.classList.toggle('off', !e.target.checked);
 });
 
 document.getElementById('servoAngle').addEventListener('input', (e) => {
@@ -526,6 +590,87 @@ document.getElementById('adaptiveMode').addEventListener('change', (e) => {
     document.getElementById('adaptiveLabel').textContent = e.target.checked ? 'Aktif' : 'Nonaktif';
     document.getElementById('adaptiveLabel').style.color = e.target.checked ? 'var(--accent-green)' : 'var(--text-muted)';
 });
+
+// --- Mode Switch (simulasi saklar hardware) ---
+// Sequencing: PWM=0 -> delay 100ms -> flip relay -> (jika smart) restore PWM
+function setRelayState(on) {
+    ['relayA', 'relayB', 'relayC'].forEach((id, i) => {
+        const el = document.getElementById(id);
+        const labels = ['Motor Pelontar A', 'Motor Pelontar B', 'Motor Feeder C'];
+        el.classList.toggle('on', on);
+        el.classList.toggle('off', !on);
+        const stateEl = el.querySelector('.relay-state');
+        stateEl.textContent = on ? 'NO · Smart' : 'NC · Manual';
+    });
+}
+
+function applyModeUI(mode) {
+    const isSmart = mode === 'smart';
+    modeBadge.classList.toggle('smart', isSmart);
+    modeBadge.classList.toggle('manual', !isSmart);
+    modeText.textContent = isSmart ? 'SMART' : 'MANUAL';
+    hwModeSwitch.textContent = isSmart ? 'LOW · Smart' : 'HIGH · Manual';
+    hwModeSwitch.classList.toggle('on', isSmart);
+    hwModeSwitch.classList.toggle('off', !isSmart);
+    statusLauncherState.textContent = isSmart ? 'Smart Mode' : 'Manual Bypass';
+    statusLauncher.classList.toggle('online', isSmart);
+    statusLauncher.classList.toggle('warning', !isSmart);
+    manualOverlay.hidden = isSmart;
+    controlBody.classList.toggle('is-manual', !isSmart);
+}
+
+async function transitionMode(targetMode) {
+    if (hwState.transitioning || hwState.mode === targetMode) return;
+    hwState.transitioning = true;
+    modeBadge.disabled = true;
+
+    // Step 1: kill PWM (anti-spike)
+    motorAVal.textContent = '0%';
+    motorBVal.textContent = '0%';
+    motorCVal.textContent = '0%';
+    hwMasterEN.textContent = 'LOW';
+    hwMasterEN.classList.remove('on');
+    hwMasterEN.classList.add('off');
+
+    await new Promise(r => setTimeout(r, 120));
+
+    // Step 2: flip relays
+    const isSmart = targetMode === 'smart';
+    setRelayState(isSmart);
+
+    await new Promise(r => setTimeout(r, 120));
+
+    // Step 3: restore PWM display jika Smart
+    if (isSmart && hwState.masterEnable) {
+        motorAVal.textContent = hwState.motorA + '%';
+        motorBVal.textContent = hwState.motorB + '%';
+        motorCVal.textContent = hwState.motorC + '%';
+        hwMasterEN.textContent = 'HIGH';
+        hwMasterEN.classList.add('on');
+        hwMasterEN.classList.remove('off');
+    }
+
+    hwState.mode = targetMode;
+    applyModeUI(targetMode);
+    hwState.transitioning = false;
+    modeBadge.disabled = false;
+}
+
+modeBadge.addEventListener('click', () => {
+    transitionMode(hwState.mode === 'smart' ? 'manual' : 'smart');
+});
+
+// PSU current sim — fluctuate based on combined motor duty
+setInterval(() => {
+    if (hwState.mode !== 'smart' || !hwState.masterEnable) {
+        document.getElementById('psuCurrent').textContent = '0.1 A';
+        return;
+    }
+    const dutySum = (hwState.motorA + hwState.motorB + hwState.motorC) / 100;
+    const base = 0.4 + dutySum * 1.2;
+    const noise = (Math.random() - 0.5) * 0.3;
+    document.getElementById('psuCurrent').textContent = (base + noise).toFixed(1) + ' A';
+}, 1000);
 
 // --- Initialize ---
 renderCanvases();
