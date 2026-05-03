@@ -812,6 +812,320 @@ body {
 }
 
 /* ==========================================
+   Hardware Status + Control (Revised)
+   ========================================== */
+.hardware-grid {
+    display: grid;
+    grid-template-columns: 0.95fr 1.05fr;
+    gap: 16px;
+}
+
+/* Mode Badge (clickable to simulate hardware switch) */
+.mode-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 12px;
+    border-radius: 20px;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--text-primary);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+}
+
+.mode-badge:hover { transform: translateY(-1px); }
+
+.mode-badge.smart {
+    background: rgba(34, 197, 94, 0.12);
+    color: var(--accent-green);
+    border-color: rgba(34, 197, 94, 0.3);
+}
+
+.mode-badge.manual {
+    background: rgba(245, 158, 11, 0.12);
+    color: var(--accent-orange);
+    border-color: rgba(245, 158, 11, 0.3);
+}
+
+.mode-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: currentColor;
+    box-shadow: 0 0 8px currentColor;
+}
+
+/* Hardware Status body */
+.hw-body {
+    padding: 16px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.hw-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.hw-row-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.hw-label {
+    font-size: 13px;
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+.pin-tag {
+    font-family: 'JetBrains Mono', 'Courier New', monospace;
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 4px;
+    background: var(--bg-primary);
+    color: var(--text-muted);
+    border: 1px solid var(--border-color);
+    white-space: nowrap;
+}
+
+.hw-pill {
+    font-family: 'JetBrains Mono', 'Courier New', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 6px;
+    letter-spacing: 0.4px;
+}
+
+.hw-pill.on {
+    background: rgba(34, 197, 94, 0.12);
+    color: var(--accent-green);
+    border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.hw-pill.off {
+    background: rgba(107, 114, 128, 0.15);
+    color: var(--text-muted);
+    border: 1px solid rgba(107, 114, 128, 0.3);
+}
+
+.hw-divider {
+    height: 1px;
+    background: var(--border-color);
+    margin: 2px 0;
+}
+
+/* Relay Grid */
+.relay-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+}
+
+.relay-block {
+    padding: 12px;
+    border-radius: var(--radius-sm);
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    transition: all 0.25s;
+}
+
+.relay-block.on {
+    border-color: rgba(34, 197, 94, 0.4);
+    box-shadow: inset 0 0 0 1px rgba(34, 197, 94, 0.1);
+}
+
+.relay-block.off {
+    border-color: rgba(245, 158, 11, 0.4);
+    box-shadow: inset 0 0 0 1px rgba(245, 158, 11, 0.1);
+}
+
+.relay-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 6px;
+}
+
+.relay-name {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.relay-state {
+    font-family: 'JetBrains Mono', 'Courier New', monospace;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+}
+
+.relay-block.on .relay-state { color: var(--accent-green); }
+.relay-block.off .relay-state { color: var(--accent-orange); }
+
+.relay-sub {
+    font-size: 10px;
+    color: var(--text-muted);
+}
+
+/* PSU readouts */
+.psu-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+}
+
+.psu-item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 8px 10px;
+    background: var(--bg-primary);
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+}
+
+.psu-label {
+    font-size: 10px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.psu-val {
+    font-family: 'JetBrains Mono', 'Courier New', monospace;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--accent-cyan);
+}
+
+/* Control Launcher (revised) */
+.control-toggles {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.mini-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    user-select: none;
+    padding: 4px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+    transition: all 0.2s;
+}
+
+.mini-toggle input { accent-color: var(--accent-green); cursor: pointer; }
+.mini-toggle:hover { background: var(--bg-primary); color: var(--text-primary); }
+
+.control-body {
+    position: relative;
+}
+
+.control-label-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    gap: 8px;
+}
+
+.control-label-row label {
+    margin-bottom: 0;
+}
+
+.future-tag {
+    font-size: 9px;
+    padding: 1px 6px;
+    border-radius: 4px;
+    background: rgba(168, 85, 247, 0.15);
+    color: var(--accent-purple);
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    margin-left: 4px;
+}
+
+.motor-item .slider.motor-a::-webkit-slider-thumb { background: var(--accent-blue); box-shadow: 0 0 6px rgba(59,130,246,0.5); }
+.motor-item .slider.motor-b::-webkit-slider-thumb { background: var(--accent-cyan); box-shadow: 0 0 6px rgba(6,182,212,0.5); }
+.motor-item .slider.motor-c::-webkit-slider-thumb { background: var(--accent-purple); box-shadow: 0 0 6px rgba(168,85,247,0.5); }
+
+/* Manual mode overlay */
+.manual-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(15, 17, 23, 0.85);
+    backdrop-filter: blur(3px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius);
+    z-index: 5;
+    animation: fadeIn 0.25s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.manual-overlay-content {
+    text-align: center;
+    max-width: 360px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: center;
+}
+
+.overlay-tag {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.2px;
+    color: var(--accent-orange);
+    background: rgba(245, 158, 11, 0.12);
+    padding: 4px 12px;
+    border-radius: 12px;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    margin-bottom: 4px;
+}
+
+.manual-overlay-content strong {
+    font-size: 15px;
+    color: var(--text-primary);
+}
+
+.manual-overlay-content p {
+    font-size: 12px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
+/* When manual: dim the control card sliders behind overlay */
+.control-body.is-manual .control-grid {
+    filter: grayscale(0.7) opacity(0.5);
+    pointer-events: none;
+}
+
+/* ==========================================
    Footer
    ========================================== */
 .footer {
@@ -844,6 +1158,12 @@ body {
     .control-grid {
         grid-template-columns: repeat(2, 1fr);
     }
+    .hardware-grid {
+        grid-template-columns: 1fr;
+    }
+    .relay-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
 }
 
 @media (max-width: 768px) {
@@ -867,6 +1187,12 @@ body {
         grid-template-columns: repeat(2, 1fr);
     }
     .control-grid {
+        grid-template-columns: 1fr;
+    }
+    .relay-grid {
+        grid-template-columns: 1fr;
+    }
+    .psu-row {
         grid-template-columns: 1fr;
     }
     .footer {
